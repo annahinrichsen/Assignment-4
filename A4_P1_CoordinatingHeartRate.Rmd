@@ -8,6 +8,8 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 
+
+wd = setwd("C:/Users/annaa/OneDrive/3. semester/Exp. Method 3/Practical/Assignment 4 - coordination")
 library(tseriesChaos);library(nonlinearTseries);library(SparseM);library(crqa);library(lme4);library(modelr);library(tibble);library(MuMIn);library(stringr);library(dplyr);library(caret);library(Metrics);library(pROC);library(groupdata2);library(ggplot2); library(dplyr); library(gridExtra)
 
 ```
@@ -85,19 +87,19 @@ Conversation = Conversation %>%
 
 #plots
 #turntaking
-Resp_turn = ggplot(Turntake, aes(time, Resp1)) + geom_line()+ geom_line(aes(time, Resp2), colour = "Blue")
-HR_turn = ggplot(Turntake, aes(time, HR1)) + geom_line()+ geom_line(aes(time, HR2), colour = "Blue")
+Resp_turn = ggplot(Turntake, aes(time, Resp1)) + geom_line()+ geom_line(aes(time, Resp2), colour = "Blue") + labs(title = "Resp_turn")
+HR_turn = ggplot(Turntake, aes(time, HR1)) + geom_line()+ geom_line(aes(time, HR2), colour = "Blue") + labs(title = "HR_turn")
 
 #synch
-Resp_synch = ggplot(Synch, aes(time, Resp1)) + geom_line()+ geom_line(aes(time, Resp2), colour = "Blue")
-HR_synch = ggplot(Synch, aes(time, HR1)) + geom_line()+ geom_line(aes(time, HR2), colour = "Blue")
+Resp_synch = ggplot(Synch, aes(time, Resp1)) + geom_line()+ geom_line(aes(time, Resp2), colour = "Blue")+ labs(title = "Resp_Synch") + labs(title = "Resp_synch")
+HR_synch = ggplot(Synch, aes(time, HR1)) + geom_line()+ geom_line(aes(time, HR2), colour = "Blue")+ labs(title = "HR_turn")+ labs(title = "HR_synch")
 
 #Conversation
-Resp_Conv = ggplot(Conversation, aes(time, Resp1)) + geom_line()+ geom_line(aes(time, Resp2), colour = "Blue")
-HR_Conv = ggplot(Conversation, aes(time, HR1)) + geom_line()+ geom_line(aes(time, HR2), colour = "Blue")
+Resp_Conv = ggplot(Conversation, aes(time, Resp1)) + geom_line()+ geom_line(aes(time, Resp2), colour = "Blue")+ labs(title = "Resp_Conv")
+HR_Conv = ggplot(Conversation, aes(time, HR1)) + geom_line()+ geom_line(aes(time, HR2), colour = "Blue")+ labs(title = "HR_turn")
 
 #put together in one grid
-grid.arrange(Resp_turn,Resp_synch, Resp_Conv, HR_turn, HR_synch, HR_Conv, ncol=3)
+Gridplot = grid.arrange(Resp_turn,Resp_synch, Resp_Conv, HR_turn, HR_synch, HR_Conv, ncol=3)
 
 
 #Outlier removal function:
@@ -128,7 +130,7 @@ Conversation$HR2 = removeOuts(Conversation$HR2, threshold)
 Conversation$Resp1 = removeOuts(Conversation$Resp1, threshold)
 Conversation$Resp2 = removeOuts(Conversation$Resp2, threshold)
 
-#Scale
+#Scale = - mean/sd
 Turntake$HR1 = scale(Turntake$HR1)
 Turntake$HR2 = scale(Turntake$HR2)
 Turntake$Resp1 = scale(Turntake$Resp1)
@@ -143,6 +145,29 @@ Conversation$HR1 = scale(Conversation$HR1)
 Conversation$HR2 = scale(Conversation$HR2)
 Conversation$Resp1 = scale(Conversation$Resp1)
 Conversation$Resp2 = scale(Conversation$Resp2)
+
+```
+Run crqa on heart rate and respiration data (find parameters, run crqa)
+
+
+```{r}
+
+files <- list.files(path = wd, pattern = "Study4", recursive = TRUE)
+files
+
+# make empty list for all the information of interest
+
+  
+  
+  
+#increase n by 1 to index into the next value in the lists
+
+  
+
+#safe it all in data frame
+
+
+#write a file 
 
 ```
 
