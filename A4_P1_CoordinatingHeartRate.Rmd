@@ -496,19 +496,13 @@ r.squaredGLMM(model_HR_L)
 
 
 
-resp_box <- ggplot(shuffle_final_df, aes(shuffle_final_df$typePairs, shuffle_final_df$resp_L)) + geom_point() + geom_boxplot() + labs(title = "Respiration data")
+resp_box <- ggplot(shuffle_final_df, aes(shuffle_final_df$typePairs, shuffle_final_df$resp_L)) + geom_point() + geom_boxplot() + labs(title = "Respiration data") + labs(x = "Condition", y = "L - Respiration")
 
-HR_box <- ggplot(shuffle_final_df, aes(shuffle_final_df$typePairs, shuffle_final_df$HR_L)) + geom_point() + geom_boxplot() + labs(title = "Heart rate data")
+HR_box <- ggplot(shuffle_final_df, aes(shuffle_final_df$typePairs, shuffle_final_df$HR_L)) + geom_point() + geom_boxplot() + labs(title = "Heart rate data") + labs(x = "Condition", y = "L - Heart rate")
 
 grid.arrange(resp_box,HR_box, ncol = 2)
 
-cond_resp = ggplot(final_df, aes(x = final_df$condition, y = final_df$resp_L)) + geom_point() + geom_boxplot()+ labs(title = "Respiration data")
 
-
-cond_HR = ggplot(final_df, aes(x = final_df$condition, y = final_df$HR_L)) + geom_point() + geom_boxplot()+labs(title = "Heart rate data")
-
-
-grid.arrange(cond_resp,cond_HR, ncol = 2)
 
 
 
@@ -618,19 +612,7 @@ r.squaredGLMM(model_HR_L)
 
 
 
-resp_box <- ggplot(shuffle_final_df, aes(shuffle_final_df$typePairs, shuffle_final_df$resp_L)) + geom_point() + geom_boxplot() + labs(title = "Respiration data")
 
-HR_box <- ggplot(shuffle_final_df, aes(shuffle_final_df$typePairs, shuffle_final_df$HR_L)) + geom_point() + geom_boxplot() + labs(title = "Heart rate data")
-
-grid.arrange(resp_box,HR_box, ncol = 2)
-
-cond_resp = ggplot(final_df, aes(x = final_df$condition, y = final_df$resp_L)) + geom_point() + geom_boxplot()+ labs(title = "Respiration data")
-
-
-cond_HR = ggplot(final_df, aes(x = final_df$condition, y = final_df$HR_L)) + geom_point() + geom_boxplot()+labs(title = "Heart rate data")
-
-
-grid.arrange(cond_resp,cond_HR, ncol = 2)
 
 
 
@@ -642,7 +624,31 @@ grid.arrange(cond_resp,cond_HR, ncol = 2)
  
 ```{r}
 
+#effects on condition
 
+model_resp_L <- lmerTest::lmer(HR_L~condition + trial + (1+trial|group), data = final_df, control = lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+
+summary(model_resp_L)
+r.squaredGLMM(model_resp_L)
+
+
+
+model_HR_L <- lmerTest::lmer(HR_L~condition + trial + (1+trial|group), data = final_df, control = lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+
+summary(model_HR_L)
+r.squaredGLMM(model_HR_L)
+
+
+
+#plots
+
+cond_resp = ggplot(final_df, aes(x = final_df$condition, y = final_df$resp_L)) + geom_point() + geom_boxplot()+ labs(title = "Respiration data") + labs(x = "Condition", y = "L - Respiration")
+
+
+cond_HR = ggplot(final_df, aes(x = final_df$condition, y = final_df$HR_L)) + geom_point() + geom_boxplot()+labs(title = "Heart rate data") + labs(x = "Condition", y = "L - Heart rate")
+
+
+grid.arrange(cond_resp,cond_HR, ncol = 2)
 
 ```
 
