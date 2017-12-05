@@ -22,26 +22,14 @@ These are the questions you need to be able to answer at the end of the assignme
 
 1) How do you preprocess heart rate and respiration data? Describe the process. If any data needs to be excluded, list the excluded data and motivate the exclusion.
 
-own notes: 
-choose 1 pair
-preprossesing 
-plot - to check if the person lost the respiration belt 
-run CRQA
-does all the code I have work on 1 pair?
 
 2) Do you observe interpersonal coordination in heart rate and respiration? Describe your control baseline, the method used to quantify coordination, and the statistical models used to infer whether coordination was higher than in the baseline. Report the results of the models.
 
-own notes: 
-loop the code from 1 pair through all pairs - see if any need to be excluded
-get parametres - median
-radius = median () + 1.2
 
 
 3) Do you observe differences in coordination between conditions? Report the models and results.
 
-create shuffeled time sereis
-x = sample(x, legnth)
-run CRQA on shuffled and surrogate pairs 
+
 
 4) Is respiration coordination a likely driver of heart rate coordination? Describe how you would test for it. Bonus points if you actually run the tests and report methods and results.
 
@@ -522,93 +510,75 @@ grid.arrange(resp_box,HR_box, ncol = 2)
 
 #Loop with shuffled files
 
-setwd("/Preproc_data")
-files_preproc = list.files(path=".")
+wd = setwd("/Preproc_data")
+prepro_filelist = list.files(path=wd, pattern = "Study1") # load the preprocessed files
 
-shuffle_df = NULL
+#Loop, surrogate study 1
+prepro_filelist = list.files(path=wd, pattern = "Study1") # load the preprocessed files
 
-study = NULL
-group = NULL
-trial = NULL
-condition = NULL
+num=str_extract_all(prepro_filelist, "\\d+") #extract all numbers in the file name (i.e Study?_G?_T?)
 
-n = 1
+df= as.data.frame(t(as.data.frame(num))) #create a transposed (i.e. "tipped") dataframe of these number
+rownames(df)<-NULL #Remove rownames.
 
-for (i in files_preproc) {
-  
-  study[n] = substr(i,6,6)
-  group_temp = str_extract(i, "G\\d+")
-  group[n] = str_extract(group_temp, "\\d")
-  trial_temp = str_extract(i, "T\\d")
-  trial[n] = str_extract(trial_temp, "\\d")
-  condition_temp = str_extract(i, c("Turn", "Conv", "Sync"))
-  condition[n] = na.omit(condition_temp)
-  
-  df = read.csv(i)
-  
-  df$HR1 <- sample(df$HR1)
-  df$HR2 <- sample(df$HR2)
-  df$Resp1 <- sample(df$Resp1)
-  df$Resp1 <- sample(df$Resp2)
-  
-  
-  results_resp = crqa (df$Resp1, df$Resp2, delay=resp_delay, embed=resp_embed, radius=resp_radius,normalize=0,rescale=0,mindiagline = 2,minvertline = 2)
+pairs=as.numeric(unique(as.numeric(as.character(df$V2)))) #create pairs, i.e. unique group numbers
 
-  results_HR = crqa (df$HR1, df$HR2, delay=HR_delay, embed=HR_embed, radius=HR_radius,normalize=0,rescale=0,mindiagline = 2,minvertline = 2)
-  
-  df <- data.frame(study = study[n], group = group[n], trial = trial[n], condition = condition[n], resp_RR = results_resp$RR, resp_DET = results_resp$DET, resp_NRLINE = results_resp$NRLINE, resp_maxL = results_resp$maxL, resp_L = results_resp$L, resp_ENTR = results_resp$ENTR, resp_rENTR = results_resp$rENTR, resp_LAM = results_resp$LAM, resp_TT = results_resp$TT, HR_RR = results_HR$RR, HR_DET = results_HR$DET, HR_NRLINE = results_HR$NRLINE, HR_maxL = results_HR$maxL, HR_L = results_HR$L, HR_ENTR = results_HR$ENTR, HR_rENTR = results_HR$rENTR, HR_LAM = results_HR$LAM, HR_TT = results_HR$TT)
-  
- if (exists("shuffle_df")) {
-    shuffle_df = rbind(shuffle_df, df)
-  } 
-  else {
-    shuffle_df = df
+SurrogateList <- expand.grid(a = pairs, b = pairs) # expand.grid combines all possible combinations of a given vector
+SurrogateList = subset(SurrogateList, a != b) # Ensure that pair 1 (i.e group1) doesn't get paired with it self.
+
+#!# temp info
+#co = "Synchronous"
+#i = 1
+ 
+# Per each condition
+for (co in c("Synchronous","TurnTaking")){ #loop through a list of condintions 
+  for (i in 1:nrow(SurrogateList)){ #and loop through all the pairings of the surrogate list
     
-  n = n + 1
+  #start recreate filenames from the working directory based on the matching from the surrogatelist
+  f1=paste0('Study1_G',SurrogateList$a[i]) #Insert group numeber from Surrogatelist 
+  f2=paste0('Study1_G',SurrogateList$b[i])
+  
+  file1=prepro_filelist[grepl(f1,prepro_filelist) & grepl(co,prepro_filelist)] #insert conditions as well.
+  file2=prepro_filelist[grepl(f2,prepro_filelist) & grepl(co,prepro_filelist)]
+  
+  d1=read.csv(file1) #Load the recreated filenames
+  
+  d2=read.csv(file2) 
+  
+  #Ensure both dataframes have the same length
+  if (nrow(d1)>nrow(d2)){
+    d1=d1[1:nrow(d2),]
+  } else {
+    d2=d2[1:nrow(d1),]
+  }
+  
+  #creation of surrogate files. (Riccardo's idea of having fun and completely overdoing it ;-) ) 
+  #per each 2 pairs there are 4 possible surrogate pairs: 
+  #pair1person1 w pair2person2; 
+  d3=data.frame(Resp1=d1$Resp1,Resp2=d2$Resp2,HR1=d1$HR1,HR2=d2$HR2,Resp1S=d1$Resp1,Resp2S=d2$Resp2,HR1S=d1$HR1,HR2S=d2$HR2)
+  #pair1person2 w pair2person2;
+  d4=data.frame(Resp1=d2$Resp1,Resp2=d1$Resp2,HR1=d2$HR1,HR2=d1$HR2,Resp1S=d2$Resp1,Resp2S=d1$Resp2,HR1S=d2$HR1,HR2S=d1$HR2)
+  
+  #pair1person1 w pair2person1;
+  d5=data.frame(Resp1=d1$Resp1,Resp2=d2$Resp1,HR1=d1$HR1,HR2=d2$HR1,Resp1S=d1$Resp1,Resp2S=d2$Resp1,HR1S=d1$HR1,HR2S=d2$HR1)
+  #pair1person2 w pair2person2
+  d6=data.frame(Resp1=d2$Resp2,Resp2=d1$Resp2,HR1=d2$HR2,HR2=d1$HR2,Resp1S=d2$Resp2,Resp2S=d1$Resp2,HR1S=d2$HR2,HR2S=d1$HR2)
+  
+  #Make filenames that tells which pairs have been mixed
+  file3=paste0("Study1_SurrogateGroup",SurrogateList$a[i],"&",SurrogateList$b[i],"a_",co,".csv")
+  file4=paste0("Study1_SurrogateGroup",SurrogateList$a[i],"&",SurrogateList$b[i],"b_",co,".csv")
+  file5=paste0("Study1_SurrogateGroup",SurrogateList$a[i],"&",SurrogateList$b[i],"c_",co,".csv")
+  file6=paste0("Study1_SurrogateGroup",SurrogateList$a[i],"&",SurrogateList$b[i],"d_",co,".csv")
+  
+  #write csv files
+  write.csv(d3,file.path("surrogate",file3))
+  write.csv(d4,file.path("surrogate",file4))
+  write.csv(d5,file.path("surrogate",file5))
+  write.csv(d6,file.path("surrogate",file6))
   }
 }
 
-write.csv(shuffle_df, file = "shuffle_df")
-
-
-
-
-
-#Testing surrogate pairs
-
-
-#Testing effect of coordination on shuffled pairs 
-
- 
-surrogate_df = read.csv("surrogate_df")
-
-#random sample of surrogate_df
-surrogate_sample_df = surrogate_df[sample(nrow(surrogate_df), 22),]
-
-
-#create a type of pair coloumn
-surrogate_df$typePairs = "surrogate"
-
-
-
-surrogate_final_df = rbind(final_df, surrogate_sample_df)
-
-
-
-
-
-#model respiration coordination
-model_resp_L <- lm(resp_L~typePairs, data = surrogate_final_df)
-
-r.squaredGLMM(model_resp_L)
-summary(model_resp_L)
-
-#model heart rate coordination 
-model_HR_L <- lmerTest::lmer(HR_L~typePairs + trial + (1+trial|group), data = surrogate_final_df, control = lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
-
-summary(model_HR_L)
-r.squaredGLMM(model_HR_L)
-
+##NOW DO THE SAME FOR STUDY 2##
 
 
 
@@ -659,7 +629,14 @@ grid.arrange(cond_resp,cond_HR, ncol = 2)
  
  
 ```{r}
- 
- 
+
+
+
+
+m1 = lmerTest::lmer(HR ~ resp_L + (1|group), data = final_df, control = lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+
+summary(m1)
+
+r.squaredGLMM(m1)
  
 ````
