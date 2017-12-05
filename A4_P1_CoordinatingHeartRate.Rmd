@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 
 wd = setwd("C:/Users/annaa/OneDrive/3. semester/Exp. Method 3/Practical/Assignment 4 - coordination")
-library(tseriesChaos);library(nonlinearTseries);library(SparseM);library(crqa);library(lme4);library(modelr);library(tibble);library(MuMIn);library(stringr);library(dplyr);library(caret);library(Metrics);library(pROC);library(groupdata2);library(ggplot2); library(dplyr); library(gridExtra);library(stringr)
+library(tseriesChaos);library(nonlinearTseries);library(SparseM);library(crqa);library(lme4);library(modelr);library(tibble);library(MuMIn);library(stringr);library(dplyr);library(caret);library(Metrics);library(pROC);library(groupdata2);library(ggplot2); library(dplyr);library(gridExtra);library(stringr);library(tidyr);library(pastecs)
 
 ```
 
@@ -630,10 +630,98 @@ grid.arrange(cond_resp,cond_HR, ncol = 2)
  
 ```{r}
 
+#for one
+
+#Combine HR data
+Conversation_long <- gather(Conversation, Person, HR , HR1:HR2)
+#combine resp data
+Conversation_long <- gather(Conversation_long, Person_resp, Resp , Resp1:Resp2)
+#Get only the digits from new new "person coloumns"
+Conversation_long$Person_resp = Conversation_long$Person_resp  %>% str_extract("\\d")
+Conversation_long$Person = Conversation_long$Person_resp  %>% str_extract("\\d")
+#delete one of them (I think they fit)
+Conversation_long$Person_resp = NULL
+
+mean(Conversation_long$HR)
+mean(Conversation_long$Resp)
+
+
+results = stat.desc(Conversation_long$HR)
+results[9]
+
+
+wd = setwd("C:/Users/annaa/OneDrive/3. semester/Exp. Method 3/Practical/Assignment 4 - coordination/Preproc_data")
 
 
 
-m1 = lmerTest::lmer(HR ~ resp_L + (1|group), data = final_df, control = lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+files <- list.files(path = wd, pattern = "Study", recursive = FALSE)
+
+
+# make empty list for all the information of interest
+
+study = NULL
+group = NULL
+trial = NULL
+condition = NULL
+HR = NULL
+Resp = NULL
+person = NULL
+
+  
+#increase n by 1 to index into the next value in the lists
+n = 1
+
+  
+  
+for (i in files) 
+  {
+  
+  
+  study[n] = substr(i,6,6)
+  group_temp = str_extract(i, "G\\d+")
+  group[n] = str_extract(group_temp, "\\d")
+  trial_temp = str_extract(i, "T\\d")
+  trial[n] = str_extract(trial_temp, "\\d")
+  condition_temp = str_extract(i, c("Turn", "Conv", "Sync"))
+  condition[n] = na.omit(condition_temp)
+  
+  df = read.csv(i)
+ 
+  #Combine HR data
+  df <- gather(df, Person, HR , HR1:HR2)
+  #combine resp data
+  df <- gather(df, Person_resp, Resp , Resp1:Resp2)
+  #Get only the digits from new new "person coloumns"
+  df$Person = df$Person  %>% str_extract("\\d")
+
+  
+
+  results1 = stat.desc(df$HR)
+  results2 = stat.desc(df$Resp)
+  
+ 
+
+
+  df <- data.frame(study = study[n], group = group[n], trial = trial[n], condition = condition[n], HR = results1[9], Resp = results2[9])  
+  
+  if (exists("exercise4_df")) {
+    exercise4_df = rbind(exercise4_df, df)
+    } 
+  else {
+    exercise4_df = df
+  
+  n = n + 1
+  }
+
+}
+
+write.csv(exercise4_df, file = "exercise4_df")
+
+
+
+
+
+m1 = lmerTest::lmer(HR ~ Resp + (1|group), data = exercise4_df, control = lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
 
 summary(m1)
 
