@@ -582,8 +582,37 @@ for (co in c("Synchronous","TurnTaking")){ #loop through a list of condintions
 
 
 
+#test with surrogate as baseline
+surrogate_df = read.csv("surrogate_df")
+
+#create a type of pair coloumn
+surrogate_df$typePairs <- "surrogate" 
+final_df$typePairs <- "real"
+
+surrogate_final_df <- rbind(final_df, surrogate_df)
 
 
+
+#add group
+
+
+
+
+
+
+
+
+#model respiration coordination
+model_resp_L <- lmerTest::lmer(resp_L~typePairs + trial + (1+trial|group), data = surrogate_final_df, control = lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+
+r.squaredGLMM(model_resp_L)
+summary(model_resp_L)
+
+#model heart rate coordination 
+model_HR_L <- lmerTest::lmer(HR_L~typePairs + trial + (1+trial|group), data = surrogate_final_df, control = lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+
+summary(model_HR_L)
+r.squaredGLMM(model_HR_L)
 
 
 ```
@@ -596,7 +625,7 @@ for (co in c("Synchronous","TurnTaking")){ #loop through a list of condintions
 
 #effects on condition
 
-model_resp_L <- lmerTest::lmer(HR_L~condition + trial + (1+trial|group), data = final_df, control = lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+model_resp_L <- lmerTest::lmer(resp_L~condition + trial + (1+trial|group), data = final_df, control = lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
 
 summary(model_resp_L)
 r.squaredGLMM(model_resp_L)
@@ -630,26 +659,32 @@ grid.arrange(cond_resp,cond_HR, ncol = 2)
  
 ```{r}
 
-#for one
-
-#Combine HR data
-Conversation_long <- gather(Conversation, Person, HR , HR1:HR2)
-#combine resp data
-Conversation_long <- gather(Conversation_long, Person_resp, Resp , Resp1:Resp2)
-#Get only the digits from new new "person coloumns"
-Conversation_long$Person_resp = Conversation_long$Person_resp  %>% str_extract("\\d")
-Conversation_long$Person = Conversation_long$Person_resp  %>% str_extract("\\d")
-#delete one of them (I think they fit)
-Conversation_long$Person_resp = NULL
-
-mean(Conversation_long$HR)
-mean(Conversation_long$Resp)
 
 
-results = stat.desc(Conversation_long$HR)
-results[9]
 
 
+m1 = lmerTest::lmer(HR_L ~ resp_L * trial + (1|group), data = final_df, control = lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
+summary(m1)
+
+r.squaredGLMM(m1)
+
+
+final_df$group = as.character(final_df$group)
+
+line = ggplot(final_df, aes(trial, resp_L, color = group))+
+  geom_point(stat = "summary", fun.y=mean)+
+  stat_summary(fun.y=mean, geom="line")
+
+line
+ 
+```
+
+
+
+
+```{r}
+
+#Effect of respiration on heart rate, extra code that I don't want to delete 
 wd = setwd("C:/Users/annaa/OneDrive/3. semester/Exp. Method 3/Practical/Assignment 4 - coordination/Preproc_data")
 
 
@@ -721,10 +756,4 @@ write.csv(exercise4_df, file = "exercise4_df")
 
 
 
-m1 = lmerTest::lmer(HR ~ Resp + (1|group), data = exercise4_df, control = lmerControl(optimizer = "nloptwrap", calc.derivs = FALSE))
-
-summary(m1)
-
-r.squaredGLMM(m1)
- 
-````
+```
